@@ -1,0 +1,22 @@
+{
+  "name": "knowme_backend",
+  "version": "1.0.0",
+  "description": "Backend of KnowMe",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuisFarfan57/KnowMe_Backend.git"
+  },
+  "author": "Luis Farfán",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LuisFarfan57/KnowMe_Backend/issues"
+  },
+  "homepage": "https://github.com/LuisFarfan57/KnowMe_Backend#readme",
+  "dependencies": {
+    "fastify": "^3.13.0"
+  }
+}
