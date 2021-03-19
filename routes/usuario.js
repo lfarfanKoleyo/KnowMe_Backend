@@ -24,7 +24,7 @@ router.post('/nuevo', function(req, res, next) {
     usuarios[req.body.id] = nuevoUsuario
 
 
-    res.json({usuario: nuevoUsuario})
+    res.status(201).json({usuario: nuevoUsuario})
 })
 
 router.get('/:id', function(req, res, next) {
@@ -32,7 +32,7 @@ router.get('/:id', function(req, res, next) {
 
     if (!usuarioEncontrado) next('No se encontro el usuario')
 
-    res.json({usuario: usuarioEncontrado})
+    res.status(200).json({usuario: usuarioEncontrado})
 })
 
 router.put('/:id', function(req, res, next) {
@@ -52,7 +52,7 @@ router.put('/:id', function(req, res, next) {
 
     database.usuarios[req.params.id] = usuarioEncontrado
 
-    res.json({usuario: database.usuarios[req.params.id]})
+    res.status(204).json({usuario: database.usuarios[req.params.id]})
 })
 
 router.delete('/:id', function(req, res, next) {
@@ -62,7 +62,7 @@ router.delete('/:id', function(req, res, next) {
 
     delete database.usuarios[req.params.id]
 
-    res.json({usario: database.usuarios[req.params.id]})
+    res.status(204).json({usario: database.usuarios[req.params.id]})
 })
 
 module.exports = router
