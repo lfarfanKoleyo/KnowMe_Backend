@@ -1,12 +1,16 @@
-var createError = require('http-errors')
-var express = require('express')
-var path = require('path')
-var cookieParser = require('cookie-parser')
-var logger = require('morgan')
+let createError = require('http-errors')
+let express = require('express')
+let path = require('path')
+let cookieParser = require('cookie-parser')
+let logger = require('morgan')
 
-var securityRouter = require('./routes/security')
+let database = require('./config/database')
 
-var app = express()
+let securityRouter = require('./routes/security')
+let emprendimiento = require('./routes/emprendimiento')
+let usuario = require('./routes/usuario')
+
+let app = express()
 
 app.use(logger('dev'))
 app.use(express.json())
@@ -14,6 +18,8 @@ app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 
 app.use('/api/v1/security/', securityRouter)
+app.use('/api/v1/emprendimiento/', emprendimiento)
+app.use('/api/v1/usuario/', usuario)
 
 // error handler
 app.use(function(err, req, res, next) {
