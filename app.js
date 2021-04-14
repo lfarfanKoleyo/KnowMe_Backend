@@ -4,8 +4,6 @@ let path = require('path')
 let cookieParser = require('cookie-parser')
 let logger = require('morgan')
 
-let database = require('./config/database')
-
 let securityRouter = require('./routes/security')
 let emprendimiento = require('./routes/emprendimiento')
 let usuario = require('./routes/usuario')
