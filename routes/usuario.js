@@ -5,10 +5,10 @@ const database = require('../config/database')
 
 router.post('/nuevo', function(req, res, next) {
     if (req.body.email !== req.body.reEmail)
-        next('No coinciden los emails')
+        res.status(500).json({message: 'No coinciden los emails'})
 
     if (req.body.password !== req.body.rePassword)
-        next('No coinciden las contraseñas')
+        res.status(500).json({message: 'No coinciden las contraseñas'})
 
     let nuevoUsuario = {
         nombre: req.body.nombre,
@@ -23,7 +23,7 @@ router.post('/nuevo', function(req, res, next) {
     database.connect(function(err, client) {
         if (err) next('Error al conectarse a la base de datos')
 
-        const db = client.db('test')
+        const db = client.db('KnowMe')
 
         db.collection('Usuarios').insertOne(nuevoUsuario)
         .then(result => {
@@ -41,7 +41,7 @@ router.get('/', function(req, res, next) {
     database.connect(function(err, client) {
         if (err) next('Error al conectarse a la base de datos')
 
-        const db = client.db('test')
+        const db = client.db('KnowMe')
 
         db.collection('Usuarios').find().toArray((err, result) => {
             console.log(result)
@@ -55,7 +55,7 @@ router.get('/:id', function(req, res, next) {
     database.connect(function(err, client) {
         if (err) next('Error al conectarse a la base de datos')
 
-        const db = client.db('test')
+        const db = client.db('KnowMe')
         const query = {
             _id: ObjectId(req.params.id)
         }
@@ -76,7 +76,7 @@ router.put('/:id', function(req, res, next) {
     database.connect(function(err, client) {
         if (err) next('Error al conectarse a la base de datos')
 
-        const db = client.db('test')
+        const db = client.db('KnowMe')
         const query = {
             _id: ObjectId(req.params.id)
         }
@@ -115,7 +115,7 @@ router.delete('/:id', function(req, res, next) {
     database.connect(function(err, client) {
         if (err) next('Error al conectarse a la base de datos')
 
-        const db = client.db('test')
+        const db = client.db('KnowMe')
         const query = {
             _id: ObjectId(req.params.id)
         }

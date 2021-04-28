@@ -3,6 +3,20 @@ const express = require('express')
 const router = express.Router()
 const database = require('../config/database')
 
+router.get('/', function(req, res, next) {
+    database.connect(function(err, client) {
+        if (err) next('Error al conectarse a la base de datos')
+
+        const db = client.db('KnowMe')
+
+        db.collection('Emprendimientos').find().toArray((err, result) => {
+            console.log(result)
+            client.close()
+            res.status(201).json({emprendimientos: result})
+        })
+    })
+})
+
 router.post('/nuevo', function (req, res, next) {
     let nuevoEmprendimiento = {
         nombre: req.body.nombre,
@@ -20,7 +34,7 @@ router.post('/nuevo', function (req, res, next) {
     database.connect(function(err, client) {
         if (err) next('Error al conectarse a la base de datos')
 
-        const db = client.db('test')
+        const db = client.db('KnowMe')
 
         db.collection('Emprendimientos').insertOne(nuevoEmprendimiento)
         .then(result => {
@@ -38,7 +52,7 @@ router.get('/:id', function (req, res, next) {
     database.connect(function(err, client) {
         if (err) next('Error al conectarse a la base de datos')
 
-        const db = client.db('test')
+        const db = client.db('KnowMe')
         const query = {
             _id: ObjectId(req.params.id)
         }
@@ -59,7 +73,7 @@ router.put('/:id', function (req, res, next) {
     database.connect(function(err, client) {
         if (err) next('Error al conectarse a la base de datos')
 
-        const db = client.db('test')
+        const db = client.db('KnowMe')
 
         db.collection('Emprendimientos').findOneAndUpdate(
             {
@@ -98,7 +112,7 @@ router.delete('/:id', function (req, res, next) {
     database.connect(function(err, client) {
         if (err) next('Error al conectarse a la base de datos')
 
-        const db = client.db('test')
+        const db = client.db('KnowMe')
         const query = {
             _id: ObjectId(req.params.id)
         }
