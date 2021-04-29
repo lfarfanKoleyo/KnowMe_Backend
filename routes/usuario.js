@@ -5,10 +5,10 @@ const database = require('../config/database')
 
 router.post('/nuevo', function(req, res, next) {
     if (req.body.email !== req.body.reEmail)
-        res.status(500).json({message: 'No coinciden los emails'})
+        return res.status(500).json({message: 'No coinciden los emails'})
 
     if (req.body.password !== req.body.rePassword)
-        res.status(500).json({message: 'No coinciden las contraseñas'})
+        return res.status(500).json({message: 'No coinciden las contraseñas'})
 
     let nuevoUsuario = {
         nombre: req.body.nombre,
@@ -21,7 +21,7 @@ router.post('/nuevo', function(req, res, next) {
     }
 
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
 
@@ -29,31 +29,31 @@ router.post('/nuevo', function(req, res, next) {
         .then(result => {
             if (result.result.ok !== 1) {
                 client.close()
-                next('Error al insertar')
+                return res.status(500).json({message: 'Error al insertar'})
             }
             client.close()
-            res.status(201).json({usuario: nuevoUsuario})
+            return res.status(201).json({usuario: nuevoUsuario})
         })
     })
 })
 
 router.get('/', function(req, res, next) {
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
 
         db.collection('Usuarios').find().toArray((err, result) => {
             console.log(result)
             client.close()
-            res.status(201).json({usuarios: result})
+            return res.status(201).json({usuarios: result})
         })
     })
 })
 
 router.get('/:id', function(req, res, next) {
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
         const query = {
@@ -63,18 +63,18 @@ router.get('/:id', function(req, res, next) {
         db.collection('Usuarios').findOne(query).then(result => {
             if (!result) {
                 client.close()
-                res.status(500).json({message: 'No se encontro el usuario'})
+                return res.status(500).json({message: 'No se encontro el usuario'})
             }
             console.log(result)
             client.close()
-            res.status(201).json({usuario: result})
+            return res.status(201).json({usuario: result})
         })
     })
 })
 
 router.put('/:id', function(req, res, next) {
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
         const query = {
@@ -102,18 +102,18 @@ router.put('/:id', function(req, res, next) {
         ).then(result => {
             if (!result) {
                 client.close()
-                res.status(500).json({message: 'No se encontro el usuario'})
+                return res.status(500).json({message: 'No se encontro el usuario'})
             }
             console.log(result.value)
             client.close()
-            res.status(202).json({usuario: result.value})
+            return res.status(202).json({usuario: result.value})
         })
     })
 })
 
 router.delete('/:id', function(req, res, next) {
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
         const query = {
@@ -128,10 +128,10 @@ router.delete('/:id', function(req, res, next) {
             console.log(result)
             if (!result.ok) {
                 client.close()
-                res.status(500).json({message: 'Error'})
+                return res.status(500).json({message: 'Error'})
             }
             client.close()
-            res.status(204).json({usuario: result})
+            return res.status(204).json({usuario: result})
         })
     })
 })

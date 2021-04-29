@@ -5,14 +5,14 @@ const database = require('../config/database')
 
 router.get('/', function(req, res, next) {
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
 
         db.collection('Emprendimientos').find().toArray((err, result) => {
             console.log(result)
             client.close()
-            res.status(201).json({emprendimientos: result})
+            return res.status(201).json({emprendimientos: result})
         })
     })
 })
@@ -32,7 +32,7 @@ router.post('/nuevo', function (req, res, next) {
     }
 
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
 
@@ -40,17 +40,17 @@ router.post('/nuevo', function (req, res, next) {
         .then(result => {
             if (result.result.ok !== 1) {
                 client.close()
-                next('Error al insertar')
+                return res.status(500).json({message: 'Error al insertar'})
             }
             client.close()
-            res.status(201).json({emprendimiento: nuevoEmprendimiento})
+            return res.status(201).json({emprendimiento: nuevoEmprendimiento})
         })
     })
 })
 
 router.get('/:id', function (req, res, next) {
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
         const query = {
@@ -60,18 +60,18 @@ router.get('/:id', function (req, res, next) {
         db.collection('Emprendimientos').findOne(query).then(result => {
             if (!result) {
                 client.close()
-                res.status(500).json({message: 'No se encontro el negocio'})
+                return res.status(500).json({message: 'No se encontro el negocio'})
             }
             console.log(result)
             client.close()
-            res.status(201).json({emprendimiento: result})
+            return res.status(201).json({emprendimiento: result})
         })
     })
 })
 
 router.put('/:id', function (req, res, next) {
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
 
@@ -99,18 +99,18 @@ router.put('/:id', function (req, res, next) {
         ).then(result => {
             if (!result.value) {
                 client.close()
-                res.status(500).json({message: 'No se encontro el negocio'})
+                return res.status(500).json({message: 'No se encontro el negocio'})
             }
             console.log(result)
             client.close()
-            res.status(202).json({emprendimiento: result.value})
+            return res.status(202).json({emprendimiento: result.value})
         })
     })
 })
 
 router.delete('/:id', function (req, res, next) {
     database.connect(function(err, client) {
-        if (err) next('Error al conectarse a la base de datos')
+        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
         const query = {
@@ -125,10 +125,10 @@ router.delete('/:id', function (req, res, next) {
             console.log(result)
             if (!result.ok) {
                 client.close()
-                res.status(500).json({message: 'Error'})
+                return res.status(500).json({message: 'Error'})
             }
             client.close()
-            res.status(204).json({emprendimiento: result})
+            return res.status(204).json({emprendimiento: result})
         })
     })
 })
