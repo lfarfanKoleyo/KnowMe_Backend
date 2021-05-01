@@ -1,0 +1,13 @@
+version: '3'
+services:
+    server:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: on-failure
+        volumes:
+            - './app/:/usr/src/app'
+        user: root:root
+        privileged: true
+        ports:
+            - '3000:3000'
