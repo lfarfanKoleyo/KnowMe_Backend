@@ -4,12 +4,22 @@ const router = express.Router()
 const database = require('../config/database')
 
 router.get('/', function(req, res, next) {
+    console.log(req.query)
+    let query = {}
+    if (req.query.idUsuario) query.idUsuario = req.query.idUsuario
+    if (req.query.pais) query.pais = {$regex : ".*" + req.query.pais + ".*"}
+    if (req.query.departamento) query.departamento = {$regex : ".*" + req.query.departamento + ".*"}
+    if (req.query.municipio) query.municipio = {$regex : ".*" + req.query.municipio + ".*"}
+    if (req.query.zona) query.zona = {$regex : ".*" + req.query.zona + ".*"}
+    if (req.query.categoria) query.categorias = {$regex : ".*" + req.query.categoria + ".*"}
+    if (req.query.noIdUsuario) query.idUsuario = {$ne : req.query.noIdUsuario }
+
     database.connect(function(err, client) {
         if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
 
-        db.collection('Emprendimientos').find().toArray((err, result) => {
+        db.collection('Emprendimientos').find(query).toArray((err, result) => {
             console.log(result)
             client.close()
             return res.status(201).json({emprendimientos: result})
@@ -28,7 +38,8 @@ router.post('/nuevo', function (req, res, next) {
         departamento: req.body.departamento,
         pais: req.body.pais,
         zona: req.body.zona,
-        categorias: req.body.categorias
+        categorias: req.body.categorias,
+        idUsuario: req.body.idUsuario
     }
 
     database.connect(function(err, client) {
@@ -125,10 +136,10 @@ router.delete('/:id', function (req, res, next) {
             console.log(result)
             if (!result.ok) {
                 client.close()
-                return res.status(500).json({message: 'Error'})
+                return res.json({message: 'Error'})
             }
             client.close()
-            return res.status(204).json({emprendimiento: result})
+            return res.status(204).json({correcto: true})
         })
     })
 })

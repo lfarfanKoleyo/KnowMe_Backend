@@ -2,13 +2,15 @@ const { ObjectId } = require('bson')
 const express = require('express')
 const router = express.Router()
 const database = require('../config/database')
+const md5 = require('md5')
+const jwt = require('../config/jwt')
 
 router.post('/nuevo', function(req, res, next) {
     if (req.body.email !== req.body.reEmail)
-        return res.status(500).json({message: 'No coinciden los emails'})
+        return res.json({message: 'No coinciden los emails'})
 
     if (req.body.password !== req.body.rePassword)
-        return res.status(500).json({message: 'No coinciden las contraseñas'})
+        return res.json({message: 'No coinciden las contraseñas'})
 
     let nuevoUsuario = {
         nombre: req.body.nombre,
@@ -17,22 +19,33 @@ router.post('/nuevo', function(req, res, next) {
         fechaNacimiento: req.body.fechaNacimiento,
         email: req.body.email,
         username: req.body.username,
-        password: req.body.password
+        password: md5(req.body.password),
+        imagenPerfil: req.body.imagenPerfil
     }
 
     database.connect(function(err, client) {
-        if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
+        if (err) return res.json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
 
-        db.collection('Usuarios').insertOne(nuevoUsuario)
-        .then(result => {
-            if (result.result.ok !== 1) {
+        db.collection('Usuarios').findOne({
+            email: nuevoUsuario.email
+        }).then(result => {
+            if (result) {
                 client.close()
-                return res.status(500).json({message: 'Error al insertar'})
+                return res.json({message: 'Ya existe un usuario con el correo ingresado'})
             }
-            client.close()
-            return res.status(201).json({usuario: nuevoUsuario})
+
+            db.collection('Usuarios').insertOne(nuevoUsuario)
+            .then(result => {
+                if (result.result.ok !== 1) {
+                    client.close()
+                    return res.json({message: 'Error al insertar'})
+                }
+                client.close()
+                const token = jwt.generateToken(nuevoUsuario.username)
+                return res.status(201).json({usuario: nuevoUsuario, token: token})
+            })
         })
     })
 })
