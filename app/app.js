@@ -27,9 +27,9 @@ app.use(function(req,res,next){
 app.use('/api/v1/security/', securityRouter)
 app.use('/api/v1/usuario/', usuario)
 
-app.use(function(req, res, next) {
+/*app.use(function(req, res, next) {
   jwt.validate(req, res, next)
-})
+})*/
 
 app.use('/api/v1/emprendimiento/', emprendimiento)
 

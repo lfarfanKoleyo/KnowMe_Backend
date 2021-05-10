@@ -2,6 +2,16 @@ const { ObjectId } = require('bson')
 const express = require('express')
 const router = express.Router()
 const database = require('../config/database')
+const axios = require('axios')
+
+const redis = require('redis')
+const redisClient = redis.createClient(6379, '0.0.0.0')
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms)
+    })
+}
 
 router.get('/', function(req, res, next) {
     console.log(req.query)
@@ -59,8 +69,8 @@ router.post('/nuevo', function (req, res, next) {
     })
 })
 
-router.get('/:id', function (req, res, next) {
-    database.connect(function(err, client) {
+router.get('/:id', async function (req, res, next) {
+    database.connect(async function(err, client) {
         if (err) return res.status(500).json({message: 'Error al conectarse a la base de datos'})
 
         const db = client.db('KnowMe')
@@ -68,14 +78,25 @@ router.get('/:id', function (req, res, next) {
             _id: ObjectId(req.params.id)
         }
 
-        db.collection('Emprendimientos').findOne(query).then(result => {
-            if (!result) {
-                client.close()
-                return res.status(500).json({message: 'No se encontro el negocio'})
+        redisClient.get(req.params.id, async function(error, emprendimiento) {
+            if(emprendimiento) {
+                console.log('Cache ' + emprendimiento)
+                return res.status(201).json({emprendimiento: JSON.parse(emprendimiento)})
             }
-            console.log(result)
-            client.close()
-            return res.status(201).json({emprendimiento: result})
+            else {
+                await sleep(5000)
+                console.log('sin cache')
+
+                db.collection('Emprendimientos').findOne(query).then(result => {
+                    if (!result) {
+                        client.close()
+                        return res.status(500).json({message: 'No se encontro el negocio'})
+                    }
+                    redisClient.setex(req.params.id, 1440, JSON.stringify(result))
+                    client.close()
+                    return res.status(201).json({emprendimiento: result})
+                })
+            }
         })
     })
 })
