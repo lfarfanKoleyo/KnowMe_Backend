@@ -6,9 +6,7 @@ let logger = require('morgan')
 const bodyParser = require('body-parser')
 const jwt = require('./config/jwt')
 
-let securityRouter = require('./routes/security')
 let emprendimiento = require('./routes/emprendimiento')
-let usuario = require('./routes/usuario')
 
 let app = express()
 
@@ -23,9 +21,6 @@ app.use(function(req,res,next){
   res.header('Access-Control-Allow-Headers','*')
   next();
 })
-
-app.use('/api/v1/security/', securityRouter)
-app.use('/api/v1/usuario/', usuario)
 
 app.use(function(req, res, next) {
   jwt.validate(req, res, next)
