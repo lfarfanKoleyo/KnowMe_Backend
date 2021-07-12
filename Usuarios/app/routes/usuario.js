@@ -24,7 +24,7 @@ router.post('/nuevo', function(req, res, next) {
     }
 
     database.connect(function(err, client) {
-        if (err) return res.json({message: 'Error al conectarse a la base de datos'})
+        if (err) return res.json({message: 'Error al conectarse a la base de datos', error: err})
 
         const db = client.db('KnowMe')
 
