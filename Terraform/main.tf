@@ -113,7 +113,7 @@ resource "aws_subnet" "subnet-priv-2" {
   }
 }
 
-# Associate subnet with Route Table
+# Associations with Public Table
 
 resource "aws_route_table_association" "a" {
   subnet_id      = aws_subnet.subnet-1.id
@@ -125,6 +125,7 @@ resource "aws_route_table_association" "b" {
   route_table_id = aws_route_table.route-table-public.id
 }
 
+# Associations with Private Table
 resource "aws_route_table_association" "c" {
   subnet_id      = aws_subnet.subnet-priv-1.id
   route_table_id = aws_route_table.route-table-privada.id
@@ -135,19 +136,11 @@ resource "aws_route_table_association" "d" {
   route_table_id = aws_route_table.route-table-privada.id
 }
 
-# Create Security Group to allow port 22,80,443
+# Security Group
 resource "aws_security_group" "allow_web" {
   name        = "allow_web_traffic"
   description = "Allow Web inbound traffic"
   vpc_id      = aws_vpc.knowme-vpc.id
-
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   ingress {
     description = "HTTP"
@@ -216,7 +209,7 @@ resource "aws_docdb_cluster" "docdb" {
   master_password        = "trusTU_r+wexag8-uva*"
   db_subnet_group_name   = "knowme-subnetgroup"
   vpc_security_group_ids = [aws_security_group.allow_web.id]
-  skip_final_snapshot     = true
+  skip_final_snapshot    = true
 }
 
 resource "aws_docdb_cluster_instance" "cluster_instances" {
@@ -230,7 +223,7 @@ output "mongodb_endpoint" {
   value = aws_docdb_cluster.docdb.endpoint
 }
 
-# Create a network interface with an ip in the subnet for server
+# Network interface
 
 resource "aws_network_interface" "maintenance-nic" {
   subnet_id       = aws_subnet.subnet-1.id
@@ -239,7 +232,7 @@ resource "aws_network_interface" "maintenance-nic" {
 
 }
 
-# Assign an elastic IP to the network interface for server
+# Elastic IP
 
 resource "aws_eip" "one" {
   vpc                       = true
@@ -255,7 +248,7 @@ output "server_public_ip" {
 # Assign an elastic IP to the network interface for NAT
 
 resource "aws_eip" "eip-nat" {
-  vpc                       = true
+  vpc = true
 }
 
 output "nat_public_ip" {
@@ -277,10 +270,10 @@ resource "aws_nat_gateway" "nat-gw-1" {
 
 # Ubuntu server
 resource "aws_instance" "ec2-maintenance" {
-  ami                         = "ami-0dc2d3e4c0f9ebd18"
-  instance_type               = "t2.micro"
-  availability_zone           = "us-east-1a"
-  key_name                    = "Know-Me-keypair"
+  ami               = "ami-0dc2d3e4c0f9ebd18"
+  instance_type     = "t2.micro"
+  availability_zone = "us-east-1a"
+  key_name          = "Know-Me-keypair"
   network_interface {
     device_index         = 0
     network_interface_id = aws_network_interface.maintenance-nic.id
@@ -304,20 +297,20 @@ data "aws_iam_role" "ecs_task_execution_role" {
 
 # Task Definition Usuarios
 resource "aws_ecs_task_definition" "service-usuarios" {
-  family = "Usuarios"
+  family             = "Usuarios"
   execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
-  network_mode             = "awsvpc"
-  cpu       = 256
-  memory    = 512
+  task_role_arn      = data.aws_iam_role.ecs_task_execution_role.arn
+  network_mode       = "awsvpc"
+  cpu                = 256
+  memory             = 512
   container_definitions = jsonencode([
     {
       name      = "Usuarios"
       image     = "public.ecr.aws/u6b7x2c0/knowme_usuarios:latest"
       essential = true
       environment = [
-            {name: "MONGO_ENDPOINT", value: aws_docdb_cluster.docdb.endpoint }
-        ]
+        { name : "MONGO_ENDPOINT", value : aws_docdb_cluster.docdb.endpoint }
+      ]
       portMappings = [
         {
           containerPort = 3000
@@ -330,20 +323,20 @@ resource "aws_ecs_task_definition" "service-usuarios" {
 
 # Task Definition Emprendimientos
 resource "aws_ecs_task_definition" "service-emprendimientos" {
-  family = "Emprendimientos"
+  family             = "Emprendimientos"
   execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
-  network_mode             = "awsvpc"
-  cpu       = 256
-  memory    = 512
+  task_role_arn      = data.aws_iam_role.ecs_task_execution_role.arn
+  network_mode       = "awsvpc"
+  cpu                = 256
+  memory             = 512
   container_definitions = jsonencode([
     {
       name      = "Emprendimientos"
       image     = "public.ecr.aws/u6b7x2c0/knowme_emprendimientos:latest"
       essential = true
       environment = [
-            {name: "MONGO_ENDPOINT", value: aws_docdb_cluster.docdb.endpoint }
-        ]
+        { name : "MONGO_ENDPOINT", value : aws_docdb_cluster.docdb.endpoint }
+      ]
       portMappings = [
         {
           containerPort = 3001
@@ -361,12 +354,12 @@ resource "aws_lb" "load-balancer" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.allow_web.id]
-  subnets            = [aws_subnet.subnet-1.id,aws_subnet.subnet-2.id]
+  subnets            = [aws_subnet.subnet-1.id, aws_subnet.subnet-2.id]
 }
 
 output "load_balancer_dns" {
   value = aws_lb.load-balancer.dns_name
-  
+
 }
 
 # Target Group Usuarios
@@ -377,10 +370,10 @@ resource "aws_lb_target_group" "target-group" {
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = aws_vpc.knowme-vpc.id
-  depends_on = [aws_lb.load-balancer]
+  depends_on  = [aws_lb.load-balancer]
 
   health_check {
-    path = "/api/v1/usuario"
+    path    = "/api/v1/usuario"
     matcher = 201
   }
 }
@@ -393,10 +386,10 @@ resource "aws_lb_target_group" "target-group-emp" {
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = aws_vpc.knowme-vpc.id
-  depends_on = [aws_lb.load-balancer]
+  depends_on  = [aws_lb.load-balancer]
 
   health_check {
-    path = "/api/v1/emprendimiento"
+    path    = "/api/v1/emprendimiento"
     matcher = 200
   }
 }
@@ -432,9 +425,9 @@ resource "aws_ecs_service" "usuarios" {
   cluster         = aws_ecs_cluster.know-me-ecs.id
   task_definition = aws_ecs_task_definition.service-usuarios.arn
   desired_count   = 1
-  launch_type = "FARGATE"
+  launch_type     = "FARGATE"
   network_configuration {
-    subnets = [aws_subnet.subnet-priv-1.id,aws_subnet.subnet-priv-2.id]
+    subnets         = [aws_subnet.subnet-priv-1.id, aws_subnet.subnet-priv-2.id]
     security_groups = [aws_security_group.allow_web.id]
   }
 
@@ -451,10 +444,10 @@ resource "aws_ecs_service" "emprendimiento" {
   name            = "Emprendimientos"
   cluster         = aws_ecs_cluster.know-me-ecs.id
   task_definition = aws_ecs_task_definition.service-emprendimientos.arn
-  desired_count   = 1
-  launch_type = "FARGATE"
+  desired_count   = 2
+  launch_type     = "FARGATE"
   network_configuration {
-    subnets = [aws_subnet.subnet-priv-1.id,aws_subnet.subnet-priv-2.id]
+    subnets         = [aws_subnet.subnet-priv-1.id, aws_subnet.subnet-priv-2.id]
     security_groups = [aws_security_group.allow_web.id]
   }
 
@@ -475,3 +468,123 @@ resource "aws_s3_bucket" "knowmefrontend" {
     error_document = "index.html"
   }
 }
+
+output "frontend-endpoint" {
+  value = aws_s3_bucket.knowmefrontend.website_endpoint
+}
+
+# Autoescalamiento CPU Intenso
+resource "aws_appautoscaling_target" "ecs_target" {
+  max_capacity       = 6
+  min_capacity       = 2
+  resource_id        = "service/KnowMe/Emprendimientos"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "ecs_policy" {
+  name               = "ScaleOutIntenso"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = 2
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "CPUIntenso" {
+  alarm_name          = "CPUIntenso"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "85"
+
+
+  alarm_description = "This metric monitors ec2 cpu utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy.arn]
+}
+
+# Autoescalamiento CPU Medio
+
+resource "aws_appautoscaling_policy" "ecs_policy_medio" {
+  name               = "ScaleOutMedio"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = 1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "CPUMedio" {
+  alarm_name          = "CPUMedio"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "65"
+
+
+  alarm_description = "This metric monitors ec2 cpu utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy.arn]
+}
+
+# Autoescalamiento ScaleIn
+
+resource "aws_appautoscaling_policy" "ecs_policy_in" {
+  name               = "ScaleInPolicy"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = -1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "CPUBajo" {
+  alarm_name          = "CPUMedio"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "65"
+
+
+  alarm_description = "This metric monitors ec2 cpu utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy.arn]
+}
+
