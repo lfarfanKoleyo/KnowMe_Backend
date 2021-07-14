@@ -203,15 +203,15 @@ resource "aws_docdb_subnet_group" "knowme-subnetgroup" {
 # Cluster DocumentDB
 
 resource "aws_docdb_cluster" "docdb" {
-  cluster_identifier     = "knowme-2021-07-12-11-34"
-  engine                 = "docdb"
-  master_username        = "master"
-  master_password        = "trusTU_r+wexag8-uva*"
-  db_subnet_group_name   = "knowme-subnetgroup"
-  vpc_security_group_ids = [aws_security_group.allow_web.id]
-  skip_final_snapshot    = true
-  backup_retention_period = 5
-  preferred_backup_window = "01:30-03:30"
+  cluster_identifier           = "knowme-2021-07-12-11-34"
+  engine                       = "docdb"
+  master_username              = "master"
+  master_password              = "trusTU_r+wexag8-uva*"
+  db_subnet_group_name         = "knowme-subnetgroup"
+  vpc_security_group_ids       = [aws_security_group.allow_web.id]
+  skip_final_snapshot          = true
+  backup_retention_period      = 5
+  preferred_backup_window      = "01:30-03:30"
   preferred_maintenance_window = "tue:00:00-tue:00:30"
 }
 
@@ -470,6 +470,22 @@ resource "aws_s3_bucket" "knowmefrontend" {
     index_document = "index.html"
     error_document = "index.html"
   }
+
+  policy = <<POLICY
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::knowme-2021/*"
+        }
+    ]
+}
+POLICY
+
 }
 
 output "frontend-endpoint" {
