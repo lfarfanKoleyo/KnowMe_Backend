@@ -427,7 +427,7 @@ resource "aws_ecs_service" "usuarios" {
   name            = "Usuarios"
   cluster         = aws_ecs_cluster.know-me-ecs.id
   task_definition = aws_ecs_task_definition.service-usuarios.arn
-  desired_count   = 1
+  desired_count   = 2
   launch_type     = "FARGATE"
   network_configuration {
     subnets         = [aws_subnet.subnet-priv-1.id, aws_subnet.subnet-priv-2.id]
