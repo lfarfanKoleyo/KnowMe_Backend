@@ -210,6 +210,9 @@ resource "aws_docdb_cluster" "docdb" {
   db_subnet_group_name   = "knowme-subnetgroup"
   vpc_security_group_ids = [aws_security_group.allow_web.id]
   skip_final_snapshot    = true
+  backup_retention_period = 5
+  preferred_backup_window = "01:30-03:30"
+  preferred_maintenance_window = "tue:00:00-tue:00:30"
 }
 
 resource "aws_docdb_cluster_instance" "cluster_instances" {
@@ -549,7 +552,7 @@ resource "aws_cloudwatch_metric_alarm" "CPUMedio" {
 
 
   alarm_description = "This metric monitors ec2 cpu utilization"
-  alarm_actions     = [aws_appautoscaling_policy.ecs_policy.arn]
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy_medio.arn]
 }
 
 # Autoescalamiento ScaleIn
@@ -574,7 +577,7 @@ resource "aws_appautoscaling_policy" "ecs_policy_in" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "CPUBajo" {
-  alarm_name          = "CPUMedio"
+  alarm_name          = "CPUBajo"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = "2"
   metric_name         = "CPUUtilization"
@@ -585,6 +588,267 @@ resource "aws_cloudwatch_metric_alarm" "CPUBajo" {
 
 
   alarm_description = "This metric monitors ec2 cpu utilization"
-  alarm_actions     = [aws_appautoscaling_policy.ecs_policy.arn]
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy_in.arn]
 }
 
+# Autoescalamiento Memoria Intenso
+
+resource "aws_appautoscaling_policy" "ecs_policy_memory" {
+  name               = "ScaleOutMemoriaIntenso"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = 2
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "MemoriaIntenso" {
+  alarm_name          = "MemoriaIntenso"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "85"
+
+
+  alarm_description = "This metric monitors ec2 memory utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy_memory.arn]
+}
+
+# Autoescalamiento Memoria Medio
+
+resource "aws_appautoscaling_policy" "ecs_policy_medio_memory" {
+  name               = "ScaleOutMemoriaMedio"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = 1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "MemoriaMedio" {
+  alarm_name          = "MemoriaMedio"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "65"
+
+
+  alarm_description = "This metric monitors ec2 memory utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy_medio_memory.arn]
+}
+
+# Autoescalamiento Memoria ScaleIn
+
+resource "aws_appautoscaling_policy" "ecs_policy_in_memory" {
+  name               = "ScaleInPolicyMemoria"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = -1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "MemoriaBaja" {
+  alarm_name          = "MemoriaBaja"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "65"
+
+
+  alarm_description = "This metric monitors ec2 memory utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy_in_memory.arn]
+}
+
+## Auto escalamiento Usuarios
+resource "aws_appautoscaling_target" "ecs_target_usuarios" {
+  max_capacity       = 6
+  min_capacity       = 2
+  resource_id        = "service/KnowMe/Usuarios"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+# Autoescalamiento CPU Medio
+
+resource "aws_appautoscaling_policy" "ecs_policy_medio_usuarios" {
+  name               = "ScaleOutMedioUsuarios"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target_usuarios.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target_usuarios.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target_usuarios.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = 1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "CPUMedio_usuarios" {
+  alarm_name          = "CPUMedioUsuarios"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "65"
+
+
+  alarm_description = "This metric monitors ec2 cpu utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy_medio_usuarios.arn]
+}
+
+# Autoescalamiento ScaleIn
+
+resource "aws_appautoscaling_policy" "ecs_policy_in_usuarios" {
+  name               = "ScaleInPolicyUsuarios"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target_usuarios.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target_usuarios.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target_usuarios.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = -1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "CPUBajo_usuarios" {
+  alarm_name          = "CPUBajoUsuarios"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "65"
+
+
+  alarm_description = "This metric monitors ec2 cpu utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy_in_usuarios.arn]
+}
+
+
+# Autoescalamiento Memoria Medio
+
+resource "aws_appautoscaling_policy" "ecs_policy_medio_memory_usuarios" {
+  name               = "ScaleOutMemoriaMedioUsuarios"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target_usuarios.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target_usuarios.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target_usuarios.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = 1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "MemoriaMedio_usuarios" {
+  alarm_name          = "MemoriaMedioUsuarios"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "65"
+
+
+  alarm_description = "This metric monitors ec2 memory utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy_medio_memory_usuarios.arn]
+}
+
+# Autoescalamiento Memoria ScaleIn
+
+resource "aws_appautoscaling_policy" "ecs_policy_in_memory_usuarios" {
+  name               = "ScaleInPolicyMemoriaUsuarios"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target_usuarios.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target_usuarios.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target_usuarios.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = -1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "MemoriaBaja_usuarios" {
+  alarm_name          = "MemoriaBajaUsuarios"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/EC2"
+  period              = "120"
+  statistic           = "Average"
+  threshold           = "65"
+
+
+  alarm_description = "This metric monitors ec2 memory utilization"
+  alarm_actions     = [aws_appautoscaling_policy.ecs_policy_in_memory_usuarios.arn]
+}
