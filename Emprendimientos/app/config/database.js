@@ -8,7 +8,7 @@ module.exports = data*/
 const {MongoClient} = require('mongodb')
 
 // Connection URL
-const url = 'mongodb://master:trusTU_r+wexag8-uva*'+process.env.MONGO_ENDPOINT+':27017/?ssl=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false'
+const url = 'mongodb://master:trusTU_r+wexag8-uva*@'+process.env.MONGO_ENDPOINT+':27017/?ssl=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false'
 //const url = 'mongodb+srv://root:lfarfanprado99@cluster0.tyhyi.mongodb.net/KnowMe?retryWrites=true&w=majority';
 const options = { sslValidate: true, useNewUrlParser: true, useUnifiedTopology: true, sslCA: `-----BEGIN CERTIFICATE-----
 MIIEBzCCAu+gAwIBAgICEAAwDQYJKoZIhvcNAQELBQAwgZQxCzAJBgNVBAYTAlVT
